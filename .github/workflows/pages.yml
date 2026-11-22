@@ -43,17 +43,14 @@ jobs:
           git commit -m "Add decoded episode video for Pages and raw URL"
           git push
 
-      - uses: actions/configure-pages@v5
-
-      - name: Stage Pages files
+      - name: Enable GitHub Pages from the main branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mkdir -p _site
-          cp ca-te-lustrera-ep1-propre.mp4 _site/
-          touch _site/.nojekyll
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          set +e
+          gh api --method POST /repos/${{ github.repository }}/pages \
+            -H "Accept: application/vnd.github+json" \
+            -f source[branch]=main \
+            -f source[path]=/
+          echo "post_exit=$?"
+          gh api /repos/${{ github.repository }}/pages
