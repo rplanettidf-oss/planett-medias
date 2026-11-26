@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Assemble and verify the video
+      - name: Assemble and verify videos
         run: |
           set -euo pipefail
           if [ ! -f ca-te-lustrera-ep1-propre.mp4 ]; then
@@ -29,18 +29,32 @@ jobs:
           fi
           echo "3c99205390b7dbfc87c0b85612593b17  ca-te-lustrera-ep1-propre.mp4" | md5sum -c
           ls -la ca-te-lustrera-ep1-propre.mp4
+          if [ ! -f bienveillance-planett.mp4 ]; then
+            cat parts-bienveillance/part_* > /tmp/video-bienveillance.b64
+            base64 -d /tmp/video-bienveillance.b64 > bienveillance-planett.mp4
+          fi
+          echo "70a126f3f2760562fb9bd9d28e26eb11  bienveillance-planett.mp4" | md5sum -c
+          ls -la bienveillance-planett.mp4
 
       - name: Commit the mp4 if missing from the repo
         run: |
           set -euo pipefail
-          if git ls-files --error-unmatch ca-te-lustrera-ep1-propre.mp4 >/dev/null 2>&1; then
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          CHANGED=0
+          if ! git ls-files --error-unmatch ca-te-lustrera-ep1-propre.mp4 >/dev/null 2>&1; then
+            git add ca-te-lustrera-ep1-propre.mp4
+            CHANGED=1
+          fi
+          if ! git ls-files --error-unmatch bienveillance-planett.mp4 >/dev/null 2>&1; then
+            git add bienveillance-planett.mp4
+            CHANGED=1
+          fi
+          if [ "$CHANGED" -eq 0 ]; then
             echo "mp4 already tracked"
             exit 0
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ca-te-lustrera-ep1-propre.mp4
-          git commit -m "Add decoded episode video for Pages and raw URL"
+          git commit -m "Add decoded video for Pages and raw URL"
           git push
 
       - name: Enable GitHub Pages from the main branch
